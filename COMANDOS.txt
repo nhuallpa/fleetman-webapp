@@ -1,0 +1,185 @@
+ docker run hello-world
+ docker image pull virtualpairprogrammers/fleetman-webapp
+ 
+ docker container run -p 8080:8080 virtualpairprogrammers/fleetman-webapp
+ docker container ls
+ 
+ docker-machine ip
+ docker-machine
+ docker-machine ls
+ 
+ docker container stop a4
+ 
+ docker container run -p80:8080 tutum/tomcat
+ 
+ docker container help
+ 
+ docker container run --help
+ 
+ docker image pull tomcat
+ docker container run -b tomcat
+ 
+ docker container run -d -p80:8080 tomcat
+ 
+ docker container logs -f 0f
+ 
+ docker image build -t fleetman-webapp .
+ 
+ docker container run build -p 8080:8080 -it fleetman-webapp
+ 
+ docker container run -p 8080:8080 -it fleetman-webapp
+ 
+ docker container run -p 8080:8080 -it -d fleetman-webapp
+ 
+ docker container exec -it 5d /bin/sh
+ 
+ docker container logs 5d
+ 
+ docker container ls
+ 
+ docker image build -t fleetman-webapp .
+ 
+        DOCKER FILE
+ 
+ docker image build -t my-jdk-from-dockerfile .
+ docker container run -it my-jdk-from-dockerfile
+ 
+ docker container run -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=fleetman -d mysql:5
+ docker container run -d -p80:8080 fleetman-webapp
+ 
+            NETWORK
+
+ docker network create my-network
+ docker network ls
+
+
+ docker container run -d -p80:8080 --network my-network --name fleetman-webapp fleetman-webapp
+ docker container run -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=fleetman --network my-network --name database -d mysql:5
+ 
+ NOTA: en la configuración de la app se configura la base datos con el nombre del contenedor
+ spring.datasource.url=jdbc:mysql://database:3306/fleetman
+
+ docker container exec -it 397 sh
+ 
+ docker container ls -a
+ 
+ docker container prune
+ 
+ docker container rm 51
+ 
+ docker continer run -it --network my-network alpine
+ 
+            VOLUMENES
+
+ docker volume ls
+ docker container run -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=fleetman mysql:5
+ docker volume prune
+ docker container ls -a
+ docker container prune
+
+            RENAME VOLUMES, 
+//si no se especifica el nombre del volumen se pierde en la proxima ejecucion los datos persistidos
+ docker container run -v mydata:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=fleetman mysql:5
+
+// Paramos la ejecucion anterior y limpiamos todo. 
+ docker container stop 79
+ docker container ls 
+ docker container prune
+ docker volume
+ docker volume ls
+ docker volume rm mydata
+
+//  Especificar la ruta para montar un volumen, para poder hacer un backup o colocar los archivos en un control de versiones
+ docker container run -v /home/nestor/desa/docker-myvolume:/var/lib/mysql -d -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=fleetman mysql:5
+
+
+            MAVEN: docker maven plugin  https://dmp.fabric8.io/
+
+1- Configurar el plugin en maven
+2- Mover el dockerfile a la carpeta /src/main/docker del proyecto
+3- Modificar la ruta del jar copiardo a docker. El jar lo toma de la carpeta maven en vez de ./target
+4- Ejecutar maven build... > goals: clean package docker:build
+
+
+            MAVEN: incluir el comando en el ciclo de vida da maven
+
+1- En el pom configurar un atajo para usar package:
+        <plugins>
+            <plugin>
+				<groupId>io.fabric8</groupId>
+				<artifactId>docker-maven-plugin</artifactId>
+				<version>0.21.0</version>
+			
+				<configuration>
+			        ....
+				</configuration>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>build</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>			
+		</plugins>
+
+
+2- En el setting de .m2 configurar el usuario para autenticar con docker.io
+
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                              https://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+   <servers>
+     <server>
+       <id>docker.io</id>
+       <username>username</username>
+       <password>password</password>
+     </server>
+   </servers>
+</settings>
+
+3- luego ejecutar maven build... clean package docker:push para pushear
+
+
+    MAVEN: DEPLOY
+
+Utilizar la fase deploy de maven para pushear la imagen de docker
+
+1- Configurar nuevo execution y deshabilitar la implementacion default de deploy de maven que tiene para dependencias de maven
+
+2- En el pom:
+
+
+    <executions>
+        <execution>
+            <phase>package</phase>
+            <goals>
+                <goal>build</goal>
+            </goals>
+        </execution>
+        <execution>
+            <id>mydeploy</id>
+            <phase>deploy</phase>
+            <goals>
+                <goal>push</goal>
+            </goals>
+        </execution>
+    </executions>
+    ......
+    <plugin>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <configuration>
+            <skip>true</skip>
+        </configuration>
+    </plugin>
+
+
+3- luego ejecutar maven build... clean deploy
+
+
+        DOCKER COMPOSE
+
+1 Installar docker compose https://docs.docker.com/compose/install/
